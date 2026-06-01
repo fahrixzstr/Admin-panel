@@ -17,7 +17,7 @@ if (loginForm) {
 
         try {
             // TODO: Ganti dengan email admin asli Anda
-            if (!email.includes('fahriiandriansaputra@gmail.com')) {
+            if (!email.includes('fahriandriansaputraaa@gmail.com')) {
                 Swal.fire('Error', 'Hanya admin yang boleh masuk', 'error');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
