@@ -1,61 +1,111 @@
-// admin/js/auth.js
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { auth } from "./firebase.js";
+// admin/js/auth.js - LOGIN GOOGLE SAJA
+import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from "./firebase.js";
+import { db } from "./firebase.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-const loginForm = document.getElementById('loginForm');
+console.log("Auth.js loaded");
 
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const btn = loginForm.querySelector('button');
-        const originalText = btn.innerHTML;
-
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-        btn.disabled = true;
-
-        try {
-            // TODO: Ganti dengan email admin asli Anda
-            if (!email.includes('fahriandriansaputraaa@gmail.com')) {
-                Swal.fire('Error', 'Hanya admin yang boleh masuk', 'error');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                return;
-            }
-
-            await signInWithEmailAndPassword(auth, email, password);
-            Swal.fire('Berhasil', 'Login berhasil', 'success').then(() => {
-                window.location.href = 'index.html';
-            });
-        } catch (error) {
-            console.error(error);
-            Swal.fire('Error', error.message, 'error');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    });
+// Custom Toast
+function showAlert(message, type = 'info') {
+    const oldToast = document.querySelector('.login-toast');
+    if (oldToast) oldToast.remove();
+    
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444', 
+        info: '#3b82f6',
+        warning: '#f59e0b'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = 'login-toast';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${colors[type] || colors.info};
+        color: white;
+        border-radius: 8px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 3000);
 }
 
+// Login dengan Google
+window.loginWithGoogle = async () => {
+    const btn = document.getElementById('googleBtn');
+    if (btn) btn.disabled = true;
+    
+    try {
+        console.log("Mulai login dengan Google...");
+        
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        console.log("Login berhasil:", user.email);
+        
+        // Simpan/update data user di Firestore
+        await saveUserData(user);
+        
+        showAlert('Login berhasil! Mengalihkan...', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+        
+    } catch (error) {
+        console.error("Login error:", error);
+        
+        let errorMessage = error.message;
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+            errorMessage = 'Popup ditutup. Coba lagi!';
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            errorMessage = 'Popup dibatalkan.';
+        } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = 'Koneksi internet bermasalah!';
+        }
+        
+        showAlert(errorMessage, 'error');
+        
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+};
+
+// Simpan data user ke Firestore
+async function saveUserData(user) {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+        await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            role: 'admin',
+            createdAt: serverTimestamp()
+        });
+    }
+}
+
+// Auto redirect jika sudah login
 onAuthStateChanged(auth, (user) => {
-    if (!user && window.location.pathname !== '/admin/login.html') {
-        // window.location.href = 'login.html'; // Uncomment untuk proteksi
+    console.log("Auth changed:", user ? user.email : 'not logged in');
+    if (user && window.location.pathname.includes('login.html')) {
+        window.location.href = 'index.html';
     }
 });
 
-export const logout = async () => {
-    const result = await Swal.fire({
-        title: 'Logout?',
-        text: 'Anda yakin ingin keluar?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Ya, Keluar!'
-    });
-
-    if (result.isConfirmed) {
+// Logout
+window.logout = async () => {
+    if (confirm('Logout sekarang?')) {
         await signOut(auth);
         window.location.href = 'login.html';
     }
