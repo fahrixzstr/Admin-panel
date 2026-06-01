@@ -1,4 +1,3 @@
-<!-- admin/login.html -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,8 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - FahriXZ</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+        .google-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #fff;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: 0.3s;
+        }
+        .google-btn:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+        .google-btn img {
+            width: 20px;
+            height: 20px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+        .divider span {
+            padding: 0 1rem;
+        }
+    </style>
 </head>
 <body class="login-body">
     <div class="login-container">
@@ -16,24 +65,48 @@
                 <h2>FahriXZ <span class="highlight">Admin</span></h2>
                 <p>Masuk untuk mengelola toko</p>
             </div>
+            
+            <!-- Google Login -->
+            <button class="google-btn" id="googleBtn" onclick="loginWithGoogle()">
+                <img src="https://www.gstatic.com/firebaseicon/lockup_signed_in.svg" alt="Google">
+                Login dengan Google
+            </button>
+            
+            <div class="divider">
+                <span>atau</span>
+            </div>
+            
             <form id="loginForm">
                 <div class="input-group">
                     <label>Email</label>
-                    <input type="email" id="email" placeholder="admin@fahrixz.com" required>
+                    <input type="email" id="email" placeholder="admin@fahrixz.com">
                 </div>
                 <div class="input-group">
                     <label>Password</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <input type="password" id="password" placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn-primary btn-block">
                     <i class="fas fa-sign-in-alt"></i> Masuk
                 </button>
             </form>
-            <div class="login-footer">
-                <a href="../index.html">Kembali ke Toko</a>
+            
+            <div class="login-footer" style="text-align:center;margin-top:1rem">
+                <a href="../index.html" style="color:#94a3b8">← Kembali ke Toko</a>
             </div>
         </div>
     </div>
+    
+    <script type="module">
+        // Check if already logged in
+        import { auth } from './js/firebase.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
     <script type="module" src="js/auth.js"></script>
 </body>
 </html>
